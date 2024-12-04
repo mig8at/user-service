@@ -6,7 +6,7 @@ import (
 	"testing"
 	"user_service/internal/application/dto"
 	"user_service/internal/domain/models"
-	"user_service/internal/ports/mocks"
+	"user_service/internal/interfaces/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -8,7 +8,7 @@ import (
 	"user_service/internal/application/dto"
 	"user_service/internal/domain/models"
 	"user_service/internal/infrastructure/config"
-	"user_service/internal/ports"
+	ports "user_service/internal/interfaces"
 
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"

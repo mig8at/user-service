@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 	"user_service/internal/application/dto"
-	"user_service/internal/ports"
+	ports "user_service/internal/interfaces"
 
 	"github.com/jinzhu/copier"
 )
