@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,11 +28,14 @@ func TestHTTPServer_CreateUser(t *testing.T) {
 	// Crear el servidor HTTP con el mock
 	server := NewHTTPServer(&config.Config{}, mockService, validate)
 
+	server.engine = gin.New() // Initialize the engine
+	server.registerRoutes()
+
 	// Definir el input y el output esperado
 	input := dto.CreateUser{
 		Name:     "Test User",
 		Email:    "test@example.com",
-		Nickname: "@testuser",
+		Nickname: "testuser",
 		Bio:      "Test bio",
 		Avatar:   "https://example.com/avatar.png",
 	}
@@ -64,6 +68,8 @@ func TestHTTPServer_CreateUser(t *testing.T) {
 
 	// Ejecutar la solicitud
 	server.engine.ServeHTTP(recorder, req)
+
+	fmt.Println(recorder.Body.String())
 
 	// Verificar el código de estado
 	assert.Equal(t, http.StatusCreated, recorder.Code)
