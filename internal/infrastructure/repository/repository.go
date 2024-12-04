@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"user_service/config"
 	"user_service/internal/application/dto"
 	"user_service/internal/domain/models"
-	"user_service/internal/infrastructure/config"
 	ports "user_service/internal/interfaces"
 
 	"github.com/google/uuid"

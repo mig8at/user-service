@@ -1,8 +1,8 @@
 package main
 
 import (
+	"user_service/config"
 	"user_service/internal/application"
-	"user_service/internal/infrastructure/config"
 	"user_service/internal/infrastructure/http"
 	"user_service/internal/infrastructure/repository"
 	"user_service/internal/infrastructure/seeder"

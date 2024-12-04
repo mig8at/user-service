@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"user_service/config"
 	"user_service/internal/application/dto"
-	"user_service/internal/infrastructure/config"
 	"user_service/internal/interfaces/mocks"
 
 	"github.com/gin-gonic/gin"

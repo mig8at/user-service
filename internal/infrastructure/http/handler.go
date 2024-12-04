@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"user_service/config"
 	"user_service/internal/application/dto"
-	"user_service/internal/infrastructure/config"
 	ports "user_service/internal/interfaces"
 
 	"github.com/gin-gonic/gin"

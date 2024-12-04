@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"testing"
+	"user_service/config"
 	"user_service/internal/application/dto"
 	"user_service/internal/domain/models"
-	"user_service/internal/infrastructure/config"
 
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/sqlite"
