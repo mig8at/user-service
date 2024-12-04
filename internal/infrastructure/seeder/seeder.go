@@ -1,7 +1,6 @@
 package seeder
 
 import (
-	"fmt"
 	"log"
 	"user_service/internal/domain/models"
 
@@ -31,7 +30,7 @@ func (s *Seeder) Seed() {
 			Avatar:   "https://picsum.photos/200/200?random=1",
 		},
 		{
-			ID:       uuid.NewString(),
+			ID:       "83836283-0760-4879-a7df-af4769a2d1a4",
 			Name:     "María Gómez",
 			Email:    "maria.gomez@example.com",
 			Nickname: "@mary",
@@ -203,52 +202,4 @@ func (s *Seeder) Seed() {
 		}
 	}
 
-	// Definir relaciones de seguidores de prueba
-	followers := []models.Follower{
-		{
-			ID:         uuid.NewString(),
-			UserID:     users[0].ID, // Juan Pérez
-			FollowerID: users[1].ID, // María Gómez
-		},
-		{
-			ID:         uuid.NewString(),
-			UserID:     users[0].ID, // Juan Pérez
-			FollowerID: users[2].ID, // Carlos López
-		},
-		{
-			ID:         uuid.NewString(),
-			UserID:     users[1].ID, // María Gómez
-			FollowerID: users[0].ID, // Juan Pérez
-		},
-	}
-
-	// Insertar relaciones de seguidores si no existen
-	for _, follower := range followers {
-		var existingFollower models.Follower
-		result := s.db.Where("user_id = ? AND follower_id = ?", follower.UserID, follower.FollowerID).First(&existingFollower)
-		if result.Error != nil {
-			if result.Error == gorm.ErrRecordNotFound {
-				if err := s.db.Create(&follower).Error; err != nil {
-					log.Printf("Error al insertar follower: %v", err)
-				} else {
-					log.Printf("Follower de %s insertado correctamente.", follower.UserID)
-					// Actualizar conteos de seguidores y siguiendo
-					if err := s.db.Model(&models.User{}).Where("id = ?", follower.UserID).
-						UpdateColumn("followers", gorm.Expr("followers + ?", 1)).Error; err != nil {
-						log.Printf("Error al actualizar followers para user %s: %v", follower.UserID, err)
-					}
-					if err := s.db.Model(&models.User{}).Where("id = ?", follower.FollowerID).
-						UpdateColumn("following", gorm.Expr("following + ?", 1)).Error; err != nil {
-						log.Printf("Error al actualizar following para follower %s: %v", follower.FollowerID, err)
-					}
-				}
-			} else {
-				log.Printf("Error al buscar follower: %v", result.Error)
-			}
-		} else {
-			log.Printf("Follower de %s ya existe. Skipping.", follower.UserID)
-		}
-	}
-
-	fmt.Println("Seeding completado.")
 }

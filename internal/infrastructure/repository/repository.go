@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"user_service/internal/application/dto"
@@ -125,32 +126,113 @@ func (r *repository) Update(ctx context.Context, id string, updateUser *dto.Upda
 
 func (r *repository) Follow(ctx context.Context, id, followerID string) error {
 
-	follower := &models.Follower{
-		ID:         uuid.NewString(),
-		UserID:     id,
-		FollowerID: followerID,
+	if id == followerID {
+		return fmt.Errorf("un usuario no puede seguirse a sí mismo")
 	}
 
-	if err := r.db.WithContext(ctx).Create(follower).Error; err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return fmt.Errorf("operación cancelada por exceder el límite de tiempo")
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var user, follower models.User
+
+		// Verificar existencia del usuario a seguir
+		if err := tx.Where("id = ?", id).First(&user).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("usuario a seguir no encontrado")
+			}
+			return fmt.Errorf("error al obtener el usuario a seguir: %v", err)
 		}
-		return err
-	}
 
-	return nil
+		// Verificar existencia del usuario seguidor
+		if err := tx.Where("id = ?", followerID).First(&follower).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("usuario seguidor no encontrado")
+			}
+			return fmt.Errorf("error al obtener el usuario seguidor: %v", err)
+		}
+
+		// Verificar si el seguidor ya sigue al usuario
+		var existingFollower models.Follower
+		if err := tx.Where("user_id = ? AND follower_id = ?", id, followerID).First(&existingFollower).Error; err == nil {
+			return fmt.Errorf("el usuario ya sigue a este usuario")
+		} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("error al verificar si el usuario ya sigue: %v", err)
+		}
+
+		// Crear el registro de seguimiento
+		followerRecord := &models.Follower{
+			ID:         uuid.NewString(),
+			UserID:     id,
+			FollowerID: followerID,
+		}
+		if err := tx.Create(followerRecord).Error; err != nil {
+			return fmt.Errorf("error al crear el registro de seguidor: %v", err)
+		}
+
+		// Incrementar el contador de seguidores del usuario
+		if err := tx.Model(&user).UpdateColumn("followers", gorm.Expr("followers + ?", 1)).Error; err != nil {
+			return fmt.Errorf("error al incrementar los seguidores del usuario: %v", err)
+		}
+
+		// Incrementar el contador de siguiendo del seguidor
+		if err := tx.Model(&follower).UpdateColumn("following", gorm.Expr("following + ?", 1)).Error; err != nil {
+			return fmt.Errorf("error al incrementar los siguiendo del usuario seguidor: %v", err)
+		}
+
+		return nil
+	})
 }
 
 func (r *repository) Unfollow(ctx context.Context, id, followerID string) error {
 
-	if err := r.db.WithContext(ctx).Where("user_id = ? AND follower_id = ?", id, followerID).Delete(&models.Follower{}).Error; err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return fmt.Errorf("operación cancelada por exceder el límite de tiempo")
-		}
-		return err
+	if id == followerID {
+		return fmt.Errorf("un usuario no puede dejar de seguirse a sí mismo")
 	}
 
-	return nil
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var user, follower models.User
+
+		// Verificar existencia del usuario a dejar de seguir
+		if err := tx.Where("id = ?", id).First(&user).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("usuario a dejar de seguir no encontrado")
+			}
+			return fmt.Errorf("error al obtener el usuario a dejar de seguir: %v", err)
+		}
+
+		// Verificar existencia del usuario seguidor
+		if err := tx.Where("id = ?", followerID).First(&follower).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("usuario seguidor no encontrado")
+			}
+			return fmt.Errorf("error al obtener el usuario seguidor: %v", err)
+		}
+
+		// Verificar si el seguidor ya sigue al usuario
+		var existingFollower models.Follower
+		if err := tx.Where("user_id = ? AND follower_id = ?", id, followerID).First(&existingFollower).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("el usuario no sigue a este usuario")
+			}
+			return fmt.Errorf("error al verificar si el usuario ya sigue: %v", err)
+		}
+
+		// Eliminar el registro de seguimiento
+		if err := tx.Delete(&existingFollower).Error; err != nil {
+			return fmt.Errorf("error al eliminar el registro de seguidor: %v", err)
+		}
+
+		// Decrementar el contador de seguidores del usuario
+		if err := tx.Model(&user).UpdateColumn("followers", gorm.Expr("followers - ?", 1)).Error; err != nil {
+			return fmt.Errorf("error al decrementar los seguidores del usuario: %v", err)
+		}
+
+		// Decrementar el contador de siguiendo del seguidor
+		if err := tx.Model(&follower).UpdateColumn("following", gorm.Expr("following - ?", 1)).Error; err != nil {
+			return fmt.Errorf("error al decrementar los siguiendo del usuario seguidor: %v", err)
+		}
+
+		return nil
+	})
+
 }
 
 func (r *repository) Followers(ctx context.Context, id string, page, limit int) ([]models.User, error) {

@@ -1,12 +1,14 @@
 package dto
 
 type User struct {
-	ID       string `json:"id"`
-	Name     string `json:"name" validate:"required,min=2,max=100"`
-	Email    string `json:"email" validate:"required,email"`
-	Nickname string `json:"nickname" validate:"required,alphanum,min=3,max=30"`
-	Bio      string `json:"bio" validate:"max=500"`
-	Avatar   string `json:"avatar" validate:"omitempty,url"`
+	ID        string `json:"id"`
+	Name      string `json:"name" validate:"required,min=2,max=100"`
+	Email     string `json:"email" validate:"required,email"`
+	Nickname  string `json:"nickname" validate:"required,alphanum,min=3,max=30"`
+	Bio       string `json:"bio" validate:"max=500"`
+	Avatar    string `json:"avatar" validate:"omitempty,url"`
+	Followers int    `json:"followers"`
+	Following int    `json:"following"`
 }
 
 type Follower struct {
