@@ -1,9 +1,10 @@
 package ports
 
-import "user_service/internal/domain"
+import (
+	"context"
+	"user_service/internal/application/dto"
+)
 
 type UserService interface {
-	RegisterUser(user *domain.User) error
-	GetUser(id string) (*domain.User, error)
-	GetUsers() ([]domain.User, error)
+	CreateUser(ctx context.Context, user *dto.CreateUser) (*dto.User, error)
 }

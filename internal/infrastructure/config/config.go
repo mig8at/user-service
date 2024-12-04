@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Port       string
 	BadgerPath string
+	SqlitePath string
 	Env        string
 }
 
@@ -23,7 +24,8 @@ func LoadConfig() *Config {
 
 	return &Config{
 		Port:       viper.GetString("server.port"),
-		BadgerPath: viper.GetString("badger.path"),
+		BadgerPath: viper.GetString("db.badger"),
+		SqlitePath: viper.GetString("db.sqlite"),
 		Env:        viper.GetString("env"),
 	}
 }

@@ -1,24 +1,27 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
-	"user_service/internal/domain"
+	"user_service/internal/application/dto"
 	"user_service/internal/infrastructure/config"
 	"user_service/internal/ports"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/go-playground/validator/v10"
 )
 
 type HTTPServer struct {
 	engine      *gin.Engine
+	validate    *validator.Validate
 	userService ports.UserService
 }
 
-func NewHTTPServer(cfg *config.Config, userService ports.UserService) *HTTPServer {
+func NewHTTPServer(cfg *config.Config, userService ports.UserService, validate *validator.Validate) *HTTPServer {
 	engine := gin.Default()
 	server := &HTTPServer{
 		engine:      engine,
+		validate:    validate,
 		userService: userService,
 	}
 	server.registerRoutes()
@@ -33,42 +36,30 @@ func (s *HTTPServer) Run(port string) {
 
 func (s *HTTPServer) registerRoutes() {
 	s.engine.POST("/users", s.createUser)
-	s.engine.GET("/users/:id", s.getUser)
-	s.engine.GET("/users", s.getUsers)
 }
 
 func (s *HTTPServer) createUser(c *gin.Context) {
-	var user domain.User
+	var user dto.CreateUser
+
+	// Intentar vincular el cuerpo JSON al DTO
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Generar UUID para el usuario
-	user.ID = uuid.NewString()
-
-	if err := s.userService.RegisterUser(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// Validar los datos con el validador
+	if err := s.validate.Struct(user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Error de validación: %s", err.Error())})
 		return
 	}
-	c.JSON(http.StatusCreated, user)
-}
 
-func (s *HTTPServer) getUser(c *gin.Context) {
-	id := c.Param("id")
-	user, err := s.userService.GetUser(id)
+	// Crear el usuario usando el servicio
+	createdUser, err := s.userService.CreateUser(c.Request.Context(), &user)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Usuario no encontrado"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, user)
-}
 
-func (s *HTTPServer) getUsers(c *gin.Context) {
-	users, err := s.userService.GetUsers()
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Usuarios no encontrados"})
-		return
-	}
-	c.JSON(http.StatusOK, users)
+	// Responder con el usuario creado
+	c.JSON(http.StatusCreated, createdUser)
 }

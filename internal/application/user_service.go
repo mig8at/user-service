@@ -1,38 +1,35 @@
 package application
 
 import (
-	"user_service/internal/domain"
+	"context"
+	"user_service/internal/application/dto"
 	"user_service/internal/ports"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type userService struct {
-	repo      ports.UserRepository
-	validator *validator.Validate
+	repo ports.UserRepository
 }
 
-func NewUserService(repo ports.UserRepository) ports.UserService {
+func NewService(repo ports.UserRepository) ports.UserService {
 	return &userService{
-		repo:      repo,
-		validator: validator.New(),
+		repo: repo,
 	}
 }
 
-func (s *userService) RegisterUser(user *domain.User) error {
-	// Validar los datos del usuario
-	if err := s.validator.Struct(user); err != nil {
-		return err
+func (s *userService) CreateUser(ctx context.Context, user *dto.CreateUser) (*dto.User, error) {
+
+	newUser, err := s.repo.Create(ctx, user)
+
+	if err != nil {
+		return nil, err
 	}
 
-	// Guardar el usuario en el repositorio
-	return s.repo.Create(user)
-}
-
-func (s *userService) GetUser(id string) (*domain.User, error) {
-	return s.repo.GetByID(id)
-}
-
-func (s *userService) GetUsers() ([]domain.User, error) {
-	return s.repo.GetAll()
+	return &dto.User{
+		ID:       newUser.ID,
+		Name:     newUser.Name,
+		Email:    newUser.Email,
+		Nickname: newUser.Nickname,
+		Bio:      newUser.Bio,
+		Avatar:   newUser.Avatar,
+	}, nil
 }

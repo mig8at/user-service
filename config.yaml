@@ -1,6 +1,7 @@
 server:
   port: ":8080"
-badger:
-  path: "./user.db"
+db:
+  badger: "./badger.db"
+  sqlite: "./sqlite.db"
 
 env: "development"
