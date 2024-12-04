@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"user_service/config"
 	"user_service/internal/application/dto"
-	ports "user_service/internal/interfaces"
+	"user_service/internal/interfaces"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -15,10 +15,10 @@ import (
 type HTTPServer struct {
 	engine      *gin.Engine
 	validate    *validator.Validate
-	userService ports.UserService
+	userService interfaces.UserService
 }
 
-func NewHTTPServer(cfg *config.Config, userService ports.UserService, validate *validator.Validate) *HTTPServer {
+func NewHTTPServer(cfg *config.Config, userService interfaces.UserService, validate *validator.Validate) *HTTPServer {
 	engine := gin.Default()
 	server := &HTTPServer{
 		engine:      engine,
