@@ -5,6 +5,7 @@ import (
 	"user_service/internal/infrastructure/config"
 	"user_service/internal/infrastructure/http"
 	"user_service/internal/infrastructure/repository"
+	"user_service/internal/infrastructure/seeder"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -14,14 +15,16 @@ func main() {
 	cfg := config.LoadConfig()
 	validate := validator.New()
 
-	// Ejecutar seeder solo si el entorno es desarrollo
-	// if cfg.Env == "development" {
-	// 	seed := seeder.NewSeeder(cfg)
-	// 	seed.Seed()
-	// }
-
 	// Inicializar repositorio
 	repo := repository.NewRepository(cfg)
+
+	// Inicializar seeder utilizando la conexión existente del repositorio
+	seed := seeder.NewSeeder(repo.GetDB())
+
+	// Ejecutar el seeder solo en entornos de desarrollo o prueba
+	if cfg.Env == "development" || cfg.Env == "test" {
+		seed.Seed()
+	}
 
 	// Inicializar servicio de aplicación
 	service := application.NewService(repo)

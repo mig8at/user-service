@@ -6,7 +6,14 @@ type User struct {
 	Email    string `json:"email" validate:"required,email"`
 	Nickname string `json:"nickname" validate:"required,alphanum,min=3,max=30"`
 	Bio      string `json:"bio" validate:"max=500"`
-	Avatar   string `json:"avatar" validate:"url"`
+	Avatar   string `json:"avatar" validate:"omitempty,url"`
+}
+
+type Follower struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
 }
 
 type CreateUser struct {
@@ -14,7 +21,7 @@ type CreateUser struct {
 	Email    string `json:"email" validate:"required,email"`
 	Nickname string `json:"nickname" validate:"required,alphanum,min=3,max=30"`
 	Bio      string `json:"bio" validate:"max=500"`
-	Avatar   string `json:"avatar" validate:"url"`
+	Avatar   string `json:"avatar" validate:"omitempty,url"`
 }
 
 type UpdateUser struct {
